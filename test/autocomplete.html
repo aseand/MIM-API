@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>test</title>
+  <link rel="stylesheet" href="jquery-ui.css">
+  <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+  <style>
+	.ui-autocomplete-loading {
+		background: white url("ui-anim_basic_16x16.gif") right center no-repeat;
+	}
+
+	table {
+		border-collapse: collapse;
+		table-layout:fixed;
+		width: 100%;
+		margin-left: 20px;
+	}
+
+	.table1 th, td {
+		padding: 8px;
+		text-align: left;
+		border-bottom: 1px solid #ddd;
+	}
+	td:first-child { width: 300px; }
+	tr:nth-child(even){background-color: #f2f2f2;}
+	tr:hover{background-color:#ddd}
+
+  </style>
+  <script src="jquery-3.1.1.js"></script>
+  <script src="jquery-ui-1.12.1.js"></script>
+  <script>
+
+  var APIUrl = "https://mim.ltdalarna.se/mim-api/api/";
+  //var APIUrl = "https://wfaltstvs138.ltdalarna.se:4443/mim-api/api/";
+	$( function() {
+		$( "#Seach" ).autocomplete({
+		  source: //data,
+			function( request, response ) {
+			$.ajax( {
+				beforeSend: function(req, settings) { 
+					var token = sessionStorage.getItem('tokenKey');
+					if(token){
+						req.setRequestHeader('Authorization','Bearer ' + token);
+					}
+				},
+				//headers: {
+				//	'Authorization': 'Bearer ' + token
+				//	'Accept': 'application/json',
+				//	'Content-Type': 'application/json'
+				//},
+				//type: "POST",
+				//data: JSON.stringify({prefixText:request.term,count:30}),
+				//url: APIUrl+"metaverse/search?seachpair=cn:displayname:system+cn:webadmin_funktion:computer+vmware_nicsip+infoblox_ipv4addrs+infoblox_name+infoblox_aliases&databas=true&seachvalue="+request.term,
+				url: APIUrl+"metaverse/search?seachpair=uniqueIdentifier:displayname+hsaidentity:displayname+uid:displayname+displayname:department+sn:displayname+department:departmentfullname:organizationalunit+ou:departmentfullname:organizationalunit+cn:hsaIdentity:organizationalrole+uniqueIdentifier+uid&databas=true&seachvalue="+request.term.trim(),
+				dataType: "json",
+				error: function( data ) { 
+					console.log("Error </br>Http " + data.status + " : "+ data.responseText);
+					$('#logindiv').show()
+				},
+				success: function( data ) {		
+					//response( data.d );
+					//$('#logindiv').hidden()
+					response( 
+						$.map( 
+							data.search, function( text, id ) { 
+							//var tmpjson = $.parseJSON(n)
+							//console.log(tmpjson.First);
+							//console.log(tmpjson.Second);
+							return({value:text,Second:id});
+							} 
+							)
+						);
+				}
+			} );
+		  },
+		  minLength: 3,
+		  select: function( event, ui ) {
+			//log( "Selected: " + ui.item.value + " aka " + ui.item.Second );
+			getMV(ui.item.Second);
+		  }
+		} );
+	} );
+	function getMV(id) 
+	{
+		$.ajax({
+			  dataType: "json",
+			  url: APIUrl+'metaverse?connectedma=true&object_id='+id,
+			  //data: data,
+			  success: function( data ) { showMV(data);$('#loading').hide(); },
+			  fail: function() { 
+				console.log( "error" );
+				$('#loading').hide(); 
+				var datadive = $('#data');
+				datadive.empty();
+				datadive.append("Error connecting");
+			  },
+			  error: function( data ) { 
+					console.log("Error </br>Http " + data.status + " : "+ data.responseText);
+					var datadive = $('#data');
+					datadive.empty();
+					datadive.append("Error </br>Http " + data.status + " : "+ data.responseText);
+				},
+			  beforeSend: function() { $('#loading').show(); }
+			});
+	}
+
+	function showMV(data) 
+	{
+		var tabelString = "</br><a onclick=\"tableClick(\'#{1}\',event)\" >{0}</a></br><div {2} id=\"{1}\" ></br><table class\"table1\">{3}</table></div>";
+		var tabelStringEnd = "</table></div>";
+		var trString = "<tr><td>{0}</td><td>{1}</td></tr>";
+		//Clear old data
+
+		var datadive = $('#data');
+		datadive.empty();
+		
+		//stats data
+		var AData = "";
+		$.each(data.stats, function(key, item) 
+			{
+				AData += (trString.format(key,item));
+			}
+		);
+		datadive.append(tabelString.format("▼Stats","Stats","hidden",AData));
+		if(data.metaverse[0] == null){
+			datadive.append("No metaverse data!");
+			return;
+		}
+		var mv = data.metaverse[0];
+		var attributes = mv.attributes;
+		//
+		switch(mv['object_type'])
+		{
+			case 'person':
+				AData = "";
+				//User Name Group
+				AData += trString.format("displayname",attributes.displayname);
+				AData += trString.format("tilltalsnamn",attributes.tilltalsnamn);
+				AData += trString.format("anvandarid-status",attributes['anvandarid-status']);
+				//AData.append(trString.format("hsadn",attributes["hsadn"]));
+				datadive.append(tabelString.format("▲Name","Name","",AData));
+				
+				
+				AData = "";
+				//Uniq ID group
+				AData += trString.format("uniqueidentifier",attributes.uniqueidentifier);
+				AData += trString.format("uid",attributes.uid);
+				AData += trString.format("hsaidentity",attributes.hsaidentity);
+				datadive.append(tabelString.format("▲UniqID","UniqID","",AData));
+				
+				AData = "";
+				//Contact info group
+				AData += trString.format("mail",attributes.mail);
+				AData += trString.format("mobilenumber",attributes.mobilenumber);
+				AData += trString.format("phonenumber",attributes.phonenumber);
+				datadive.append(tabelString.format("▲Contact","Contact","",AData));
+				
+				AData = "";
+				//Employment info group
+				AData += trString.format("employeestartdate",attributes.employeestartdate);
+				AData += trString.format("employeeenddate",attributes.employeeenddate);
+				AData += trString.format("aiddescription",attributes.aiddescription);
+				AData += trString.format("title",attributes.title);
+				AData += trString.format("expensedepartment",attributes.expensedepartment);
+				datadive.append(tabelString.format("▲Employment","Employment","",AData));
+				
+				AData = "";
+				//AD
+				AData += trString.format("ou1",attributes.ou1);
+				AData += trString.format("ou2",attributes.ou2);
+				AData += trString.format("ou3",attributes.ou3);
+				AData += trString.format("ou4",attributes.ou4);
+				AData += trString.format("ad-objectsid",attributes["ad-objectsid"]);
+				AData += trString.format("ad-useraccountcontrol",attributes["ad-useraccountcontrol"]);
+				AData += trString.format("adcreatetimestamp",attributes.adcreatetimestamp);
+				AData += trString.format("adamdepartmentname",attributes.adamdepartmentname);
+				AData += trString.format("issmtpignorechangeuser",attributes.issmtpignorechangeuser);
+				datadive.append(tabelString.format("▲AD","AD","",AData));
+				
+				break;
+			case 'organizationalRole':
+			case 'organizationalUnit':
+				//OU Name Group
+				AData = "";
+				AData += trString.format("object type",mv['object_type']);
+				AData += trString.format("ou",attributes.ou);
+				AData += trString.format("displayname",attributes.displayname);
+				AData += trString.format("departmentfullname",attributes.departmentfullname);
+				AData += trString.format("hsadn",attributes.hsadn);
+				AData += trString.format("depguidstring",attributes.depguidstring);
+				AData += trString.format("street",attributes.street);
+				AData += trString.format("hsaidentity",attributes.hsaidentity);
+				AData += trString.format("geographicalcoordinates",attributes.geographicalcoordinates);
+				AData += trString.format("expensedepartment",attributes.expensedepartment);
+				datadive.append(tabelString.format("▲Organization","Organization","",AData));
+				
+				break;
+			case 'computer':
+				AData = "";
+				AData += trString.format("cn",attributes.cn);
+				AData += trString.format("ou",attributes.ou);
+				AData += trString.format("dnshostname",attributes.dnshostname);
+				AData += trString.format("operatingsystem",attributes.operatingsystem);
+				AData += trString.format("operatingsystemversion",attributes.operatingsystemversion);
+				datadive.append(tabelString.format("▲Computer","Computer","",AData));
+				
+				AData = "";
+				AData += trString.format("webadmin_funktion",attributes.webadmin_funktion);
+				AData += trString.format("webadmin_beredskap",attributes.webadmin_beredskap);
+				AData += trString.format("webadmin_statusid",attributes.webadmin_statusid);
+				AData += trString.format("webadmin_systemberoenden",attributes.webadmin_systemberoenden);
+				AData += trString.format("webadmin_serveransvarig",attributes.webadmin_serveransvarig);
+				datadive.append(tabelString.format("▲Webadmin","Webadmin","",AData));
+				
+				AData = "";
+				AData += trString.format("vmware_numcpu",attributes.vmware_numcpu);
+				AData += trString.format("vmware_memorygb",attributes.vmware_memorygb);
+				AData += trString.format("vmware_usedspacegb",attributes.vmware_usedspacegb);
+				AData += trString.format("vmware_toolsversion",attributes.vmware_toolsversion);
+				AData += trString.format("vmware_nicsip",attributes.vmware_nicsip);
+				datadive.append(tabelString.format("▲VMare","VMare","",AData));
+				
+				AData = "";
+				AData += trString.format("infoblox_name",attributes.infoblox_name);
+				AData += trString.format("infoblox_ipv4addrs",attributes.infoblox_ipv4addrs);
+				datadive.append(tabelString.format("▲Infoblox","Infoblox","",AData));
+				
+				break;
+			case 'system':
+				AData = "";
+				AData += trString.format("cn",attributes.cn);
+				AData += trString.format("description",attributes.description);
+				AData += trString.format("dnshostname",attributes.dnshostname);
+				AData += trString.format("displayname",attributes.displayname);
+				AData += trString.format("computer",attributes.computer);
+				datadive.append(tabelString.format("▲System","System","",AData));
+				
+				break;
+		}
+		
+
+		//Connectet system group
+		AData = "";
+		$.each(mv.connectedma, function(nr,maobj) 
+		{
+			var maid = nr;
+			//AData += trString.format(maobj.ma_name,maobj.ma_id);
+			AData += trString.format("<a onclick=\"tableClick(\'#{1}\',event)\" >{0}</a>".format("▲"+maobj.ma_name,maid),maobj.ma_id);
+			
+			
+			var BData = "";
+			$.each(maobj["connectorobject"], function(nr,guid) { 
+				BData += "<input type=\"button\" value=\"{0}\" id=\"{2}\" onclick=\"getCS(\'#{1}\',event)\" >".format("CS",maid,guid);
+			});
+
+			AData += trString.format(BData,"<div hidden=\"\" id=\""+maid+"\" ></div>");
+		});
+		datadive.append(tabelString.format("▼Connectedma","Connectedma","hidden",AData));
+	}
+	function tableClick(name,event)
+	{
+		var text = event.target.text.substring(0,1);
+		if(text == "▼") 
+		{ 
+			event.target.text = "▲"+event.target.text.substring(1)  
+		}
+		else { 
+			event.target.text = "▼"+event.target.text.substring(1) 
+		}
+		$(name).slideToggle();  
+	}
+	function getCS(name,event)
+	{
+		var target = $(name);
+
+		$.ajax({
+			  dataType: "json",
+			  url: APIUrl+'connectorspace/history/'+event.target.id,
+			  //data: data,
+			  success: function( data ) { 
+				target.empty();
+				target.hide();
+				showCS(data,target);
+				target.toggle( "slide" );
+			  },
+			  fail: function() { 
+				console.log( "fail" );
+				target.empty();
+				target.hide();
+				target.append("fail connecting");
+				target.toggle( "slide" );
+				},
+			   error: function( data ) { 
+				console.log( "error" );
+				target.empty();
+				target.hide();
+				target.append("Error </br>Http " + data.status + " : "+ data.responseText);
+				target.toggle( "slide" );
+				},
+			  beforeSend: function() {
+				target.append("<img src=\"ui-anim_basic_16x16.gif\" height=\"42\" width=\"42\">");
+				target.show();
+			  }
+			});
+	}
+	
+	function showCS(data,target){
+		var tabelString = "<table>{0}</table>";
+		var trString = "<tr><td>{0}</td><td>{1}</td><td>{2}</td></tr>";
+		
+		var connectorspace = data.connectorspacehistory.connectorspace;
+		
+		var tabeldata = "";
+		tabeldata += trString.format("ma_name",connectorspace.ma_name,"");
+		tabeldata += trString.format("ma_id",connectorspace.ma_id,"");
+		tabeldata += trString.format("rdn",connectorspace.rdn,"");
+		tabeldata += trString.format("ma_name",connectorspace.ma_name,"");
+		tabeldata += trString.format("last_import_modification_date",connectorspace.last_import_modification_date,"");
+		tabeldata += trString.format("last_export_modification_date",connectorspace.last_export_modification_date,"");
+		
+		var csdata = connectorspace.data;
+		var csobject = csdata['cs-objects']['cs-object'];
+		tabeldata += trString.format("cs-dn",csobject['@cs-dn'],"");
+		tabeldata += trString.format("object-type",csobject['@object-type'],"");
+		
+		tabeldata += trString.format("","","");
+		var hologram = csobject['synchronized-hologram']
+		
+		//dn-attr
+		if(hologram.entry['dn-attr'] != null){
+			if($.isArray(hologram.entry['dn-attr'])) {
+				$.each(hologram.entry['dn-attr'], function(nrdn,dnattr){
+					if($.isArray(dnattr['dn-value'])){
+						tabeldata += trString.format(dnattr['@name'],"","");
+						$.each(dnattr['dn-value'], function(nr,obj){
+							tabeldata += trString.format("",obj.dn,"");
+						});
+					}
+					else{
+						if(dnattr['dn-value'] != null) { 
+							tabeldata += trString.format(dnattr['@name'],dnattr['dn-value']['dn'],"");
+						}
+						else{
+							tabeldata += trString.format("","","");
+						}
+					}
+				});
+			}
+			else
+			{
+				var dnattr = hologram.entry['dn-attr'];
+				if($.isArray(dnattr['dn-value'])){
+					tabeldata += trString.format(dnattr['@name'],"","");
+					$.each(dnattr['dn-value'], function(nr,obj){
+						tabeldata += trString.format("",obj.dn,"");
+					});
+				}
+				else{
+					if(dnattr['dn-value'] != null) { 
+						tabeldata += trString.format(dnattr['@name'],dnattr['dn-value']['dn'],"");
+					}
+					else{
+						tabeldata += trString.format("","","");
+					}
+				}
+			}
+		}
+		
+		$.each(hologram.entry.attr, function(nr,obj)
+		{
+			var objectvalue = obj.value;
+			if($.isArray(objectvalue)){
+				tabeldata += trString.format(obj['@name'],"","");
+				$.each(objectvalue, function(nr,obj2){
+					var objectvalue = obj2;
+					if( typeof objectvalue === "string" ){ objectvalue = convertCSvalue(obj2,obj2.substring(0,2));}
+					tabeldata += trString.format("",objectvalue,"");
+				});
+			}
+			else{
+				if( typeof objectvalue === "string" ){ objectvalue = convertCSvalue(obj.value,obj.value.substring(0,2));}
+				tabeldata += trString.format(obj['@name'],objectvalue,"");
+			}
+			
+		});
+		tabeldata += trString.format("","","");
+		target.append(tabelString.format(tabeldata,connectorspace.ma_name));
+		
+		//history
+		var tabelString = "</br><a onclick=\"tableClick(\'#{1}\',event)\" >{0}</a></br><div {2} id=\"{1}\" ></br><table>{3}</table></div>";
+		$.each(data.connectorspacehistory.history, function(nr,history) {
+			var tabeldata = "";
+			
+			tabeldata += trString.format("ma_id",history.ma_id,"");
+			tabeldata += trString.format("ma_name",history.ma_name,"");
+			tabeldata += trString.format("rdn",history.ma_name,"");
+			tabeldata += trString.format("last_import_modification_date",history.last_import_modification_date,"");
+			tabeldata += trString.format("last_export_modification_date",history.last_export_modification_date,"");
+			
+			if(history['data'] != null){
+				var delta = history['data'].delta;
+				tabeldata += trString.format("operation",delta['@operation'],"");
+				tabeldata += trString.format("dn",delta['@dn'],"");
+				
+				tabeldata += trString.format("------------------","------------------","");
+				
+				//dn-attr
+				if(delta['dn-attr'] != null){
+					tabeldata += trString.format(delta['dn-attr']['@name'],delta['dn-attr']['@operation'],"");
+					
+					if($.isArray(delta['dn-attr']['dn-value'])){
+						$.each(delta['dn-attr']['dn-value'], function(nr,obj){
+							tabeldata += trString.format("",obj['@operation'],obj.dn);
+						});
+					}
+					else{
+						if(delta['dn-attr']['dn-value'] != null) { 
+							tabeldata += trString.format("",delta['dn-attr']['dn-value']['@operation'],delta['dn-attr']['dn-value']['dn']);
+						}
+						else{
+							tabeldata += trString.format("","","");
+						}
+					}
+				}
+				
+				//attr
+				if(delta.attr != null){
+					//if(delta.attr.length > 1){
+					if($.isArray(delta.attr)){
+					$.each(delta.attr, function(nr,attr){
+						tabeldata += trString.format(attr['@name'],attr['@operation'],"");
+						var type = attr['@type'];
+						
+						if(attr.value != null){
+							if($.isArray(attr.value)){
+								$.each(attr.value, function(nr,value)
+								{
+									var valueoperation = value['@operation'];
+									if(valueoperation == null){ valueoperation = attr['@operation']; }
+									
+									var valuetext = value['#text'];
+									if(valuetext == null){ valuetext = value; }
+								
+									tabeldata += trString.format("",valueoperation,convertCSvalue(valuetext,type));
+								});
+							}else{
+								tabeldata += trString.format("",attr['@operation'],convertCSvalue(attr.value,type));
+							}
+						}
+					});
+					}
+					else{
+						tabeldata += trString.format(delta.attr['@name'],delta.attr['@operation'],"");
+						var type = delta.attr['@type'];
+						if(delta.attr.value != null){
+							if($.isArray(delta.attr.value)){
+								$.each(delta.attr.value, function(nr,value)
+								{
+									tabeldata += trString.format("",value['@operation'],convertCSvalue(value['#text'],type));
+								});
+							}else{
+								tabeldata += trString.format("",delta.attr['@operation'],convertCSvalue(delta.attr.value,type));
+							}
+						}
+					}
+				}
+			}
+			//var date = new Date(history.last_import_modification_date);
+			//console.log(date);
+
+			target.append(tabelString.format("▼"+history.last_import_modification_date,history.ma_name.replace(new RegExp("\\.","g"),"")+nr,"hidden",tabeldata));
+		});
+	}
+	
+	function convertCSvalue(value,type){
+		var attrvalue;
+		switch(type)
+		{
+			case '0x':
+			case 'integer':
+				attrvalue = parseInt(value);
+				break;
+			//case 'binary':
+			//	break;
+			default:
+				attrvalue = value;
+				break;
+		}
+		return attrvalue
+	}
+
+	String.prototype.format = function() {
+	  var str = this;
+	  for (var i = 0; i < arguments.length; i++) {       
+		var reg = new RegExp("\\{" + i + "\\}", "gm");             
+		str = str.replace(reg, arguments[i]);
+	  }
+	  return str;
+	}
+	function LoginFunction(){
+		$.ajax({
+		  type: 'POST',
+		  //dataType: 'jsonp',
+		  url: APIUrl+'login/token',
+		  data: {
+			'grant_type': 'password',
+			'username': $('#username').val(),
+			'password': $('#password').val()
+			},
+		  success: function( tokendata ) { 
+			sessionStorage.setItem('tokenKey', tokendata.access_token); 
+			$('#logindiv').hidden()
+			$('#password').val("")
+		  },
+		  fail: function() { 
+			console.log( "error" );
+		  },
+		  error: function( tokendata ) { 
+				console.log("Error </br>Http " + tokendata.status + " : "+ tokendata.responseText);
+			},
+		});
+		response("Error </br>Http " + data.status + " : "+ data.responseText);
+	}
+  </script>
+</head>
+<body>
+
+<div class="ui-widget">
+  <label for="Seach">Seach: </label>
+  <input id="Seach" style="width: 900px;">
+</div>
+ <div id="logindiv" style="display: none;">
+   <p>test token login(AD)</p>
+   <input type="text" id="username" name="username">
+   <input type="password" id="password" name="password" placeholder="">
+   <input type="submit" id="Login" value="Login" onclick="LoginFunction()">
+ </div>
+ <img id="loading" src="ui-anim_basic_16x16.gif" height="42" width="42" style="display: none;"> 
+ <div id="data"></div>
+</body>
+</html>

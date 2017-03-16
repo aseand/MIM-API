@@ -1,0 +1,27 @@
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\MIM.dll.config
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\MIM.dll
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\MIM.pdb
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\Newtonsoft.Json.dll
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\System.Net.Http.Formatting.dll
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\System.Web.Http.dll
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\System.Web.Http.WebHost.dll
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\System.Net.Http.Formatting.xml
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\System.Web.Http.xml
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\System.Web.Http.WebHost.xml
+C:\aseand\download\Ny mapptest\MIM\MIM\obj\Debug\MIM.csprojResolveAssemblyReference.cache
+C:\aseand\download\Ny mapptest\MIM\MIM\obj\Debug\MIM.dll
+C:\aseand\download\Ny mapptest\MIM\MIM\obj\Debug\MIM.pdb
+C:\aseand\download\Ny mapptest\MIM\MIM\bin\Newtonsoft.Json.xml
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\obj\Debug\MIM.csprojResolveAssemblyReference.cache
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\obj\Debug\MIM.dll
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\obj\Debug\MIM.pdb
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\MIM.dll.config
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\MIM.dll
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\MIM.pdb
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\Newtonsoft.Json.dll
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\System.Net.Http.Formatting.dll
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\System.Web.Http.dll
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\System.Web.Http.WebHost.dll
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\System.Net.Http.Formatting.xml
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\System.Web.Http.xml
+C:\aseand\ICC\Integration\FIM\C#\MIM-API\MIM\bin\System.Web.Http.WebHost.xml
